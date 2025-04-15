@@ -1,4 +1,6 @@
 data/
+mitdb/
+data_fake/
 experiments_logs/
 __pycache__/
 .DS_Store
