@@ -9,7 +9,7 @@ class supervised():
     def __init__(self):
         super(supervised, self).__init__()
         self.train_params = {
-            'num_epochs': 60,
+            'num_epochs': 10,  # 60
             'batch_size': 128,
             'weight_decay': 1e-4,
             'learning_rate': 1e-3,

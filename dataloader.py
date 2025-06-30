@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
-from torchvision import transforms
+#from torchvision import transforms
 
 import os
 import numpy as np
@@ -47,9 +47,12 @@ class Load_Dataset(Dataset):
 
 def data_generator(data_path, data_type, hparams):
     # original
-    train_dataset = torch.load(os.path.join(data_path, data_type, f"train.pt"))
-    val_dataset = torch.load(os.path.join(data_path, data_type, f"val.pt"))
-    test_dataset = torch.load(os.path.join(data_path, data_type, f"test.pt"))
+    # train_dataset = torch.load(os.path.join(data_path, data_type, f"train.pt"))
+    # val_dataset = torch.load(os.path.join(data_path, data_type, f"val.pt"))
+    # test_dataset = torch.load(os.path.join(data_path, data_type, f"test.pt"))
+    train_dataset = torch.load(os.path.join(data_path, data_type, "train.pt"), weights_only=False)
+    val_dataset = torch.load(os.path.join(data_path, data_type, "val.pt"), weights_only=False)
+    test_dataset = torch.load(os.path.join(data_path, data_type, "test.pt"), weights_only=False)
 
     # Loading datasets
     train_dataset = Load_Dataset(train_dataset)
@@ -67,7 +70,8 @@ def data_generator(data_path, data_type, hparams):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size,
                                                shuffle=True, drop_last=True, num_workers=0)
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset, batch_size=batch_size,
-                                             shuffle=False, drop_last=True, num_workers=0)
+                                             shuffle=False, drop_last=False, num_workers=0)
+    # If validation set is small (fewer than batch_size), drop_last=False will keep the last batch instead of dropping the entire set
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size,
                                               shuffle=False, drop_last=False, num_workers=0)
     return train_loader, val_loader, test_loader, get_class_weight(cw_dict)

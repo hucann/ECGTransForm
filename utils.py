@@ -93,7 +93,16 @@ def _calc_metrics(pred_labels, true_labels, classes_names):
     pred_labels = np.array(pred_labels).astype(int)
     true_labels = np.array(true_labels).astype(int)
 
-    r = classification_report(true_labels, pred_labels, target_names=classes_names, digits=6, output_dict=True)
+    # r = classification_report(true_labels, pred_labels, target_names=classes_names, digits=6, output_dict=True)
+    # ensures sklearn expects those 5 classes, even if only 1–2 appear in this epoch’s data
+    r = classification_report(
+        true_labels,
+        pred_labels,
+        labels=list(range(len(classes_names))),  # [0, 1, 2, 3, 4]
+        target_names=classes_names,
+        digits=6,
+        output_dict=True
+    )
     accuracy = accuracy_score(true_labels, pred_labels)
 
     return accuracy * 100, r["macro avg"]["f1-score"] * 100

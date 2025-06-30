@@ -4,6 +4,7 @@ import datetime
 import os
 import collections
 import numpy as np
+from tqdm import tqdm 
 
 import warnings
 import sklearn.exceptions
@@ -16,6 +17,7 @@ from configs.data_configs import get_dataset_class
 from configs.hparams import get_hparams_class
 from utils import AverageMeter, to_device, _save_metrics, copy_Files
 from utils import fix_randomness, starting_logs, save_checkpoint, _calc_metrics
+from utils import _plot_umap
 
 
 class trainer(object):
@@ -102,7 +104,9 @@ class trainer(object):
         for epoch in range(1, self.hparams["num_epochs"] + 1):
             model.train()
 
-            for step, batches in enumerate(self.train_dl):
+            progress_bar = tqdm(self.train_dl, desc=f"Epoch {epoch}/{self.hparams['num_epochs']}", leave=False)
+
+            for batches in progress_bar:
                 batches = to_device(batches, self.device)
 
                 data = batches['samples'].float()
@@ -112,6 +116,7 @@ class trainer(object):
                 self.optimizer.zero_grad()
 
                 # Src original features
+                data = data.unsqueeze(1) # To reshape: [128, 186] → [128, 1, 186]
                 logits = model(data)
 
                 # Cross-Entropy loss
@@ -123,6 +128,9 @@ class trainer(object):
                 losses = {'Total_loss': x_ent_loss.item()}
                 for key, val in losses.items():
                     loss_avg_meters[key].update(val, self.hparams["batch_size"])
+
+                # Update progress bar with current loss
+                progress_bar.set_postfix(loss=loss_avg_meters['Total_loss'].avg)
 
             self.evaluate(model, self.val_dl)
             tr_acc, tr_f1 = self.calc_results_per_run()
@@ -163,6 +171,7 @@ class trainer(object):
         test_acc, test_f1 = self.calc_results_per_run()
         _save_metrics(self.pred_labels, self.true_labels, self.exp_log_dir, "test_last")
         self.logger.debug(f'Acc:{test_acc:2.4f} \t F1:{test_f1:2.4f}')
+        # _plot_umap(model, self.test_dl, self.device, self.exp_log_dir)
 
 
     def evaluate(self, model, dataset):
@@ -174,7 +183,9 @@ class trainer(object):
         self.true_labels = np.array([])
 
         with torch.no_grad():
-            for batches in dataset:
+            progress_bar = tqdm(dataset, desc="Evaluating", leave=False)
+
+            for batches in progress_bar:
                 batches = to_device(batches, self.device)
                 data = batches['samples'].float()
                 labels = batches['labels'].long()
